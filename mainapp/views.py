@@ -314,7 +314,7 @@ def get_products(request):
             'name': product.name,
             'price': float(product.price),
             'description': product.description,
-            'category': product.category if hasattr(product, 'category') else '',  # Optional
+            'category': product.category.name if product.category else '',
             'image': product.image.url if product.image else '',
             'stock': product.stock,
         })

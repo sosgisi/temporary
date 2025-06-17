@@ -435,10 +435,71 @@ function updateCartCountUI() {
   }
 }
 
+async function fetchProducts() {
+    await fetch("http://127.0.0.1:8000/api/products/")
+    .then(response => {
+        if (!response.ok) throw new Error("Gagal mengambil produk");
+        return response.json();
+    })
+    .then(data => {
+        console.log(data)
+        products = data;
+        renderProducts(products);
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Gagal memuat produk.");
+    });
+
+    // Combined filter and search function
+    function filterAndSearchProducts() {
+        const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+        let filtered = products;
+
+        if (selectedCategory !== 'all') {
+            filtered = filtered.filter(product =>
+                (product.category || 'Tidak ada kategori').toLowerCase() === selectedCategory.toLowerCase()
+            );
+        }
+
+        if (searchTerm) {
+            filtered = filtered.filter(product => {
+                const name = (product.name || '').toLowerCase();
+                const desc = (product.description || '').toLowerCase();
+                const cat = (product.category || '').toLowerCase();
+
+                return name.includes(searchTerm) || desc.includes(searchTerm) || cat.includes(searchTerm);
+            });
+        }
+
+        renderProducts(filtered);
+    }
+    
+    // Populate categories in the filter dropdown
+    if (categoryFilter) {
+        console.log(products)
+        const categories = [...new Set(products.map(p => (p.category || 'Tidak ada kategori')))];
+        
+        categoryFilter.innerHTML = '<option value="all">Semua Kategori</option>';
+
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+
+        categoryFilter.addEventListener('change', () => filterAndSearchProducts());
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     checkLoginStatus(); // panggil ini di awal halaman
     window.fetchUsersFromAPI();
     updateCartCountUI();
+    fetchProducts()
 
     // --- Login Logic ---
     const btnLoginSubmit = document.getElementById('btnLoginSubmit');
@@ -773,64 +834,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnVerifyOtp) btnVerifyOtp.addEventListener('click', window.verifyOtp);
     if (btnResendOtp) btnResendOtp.addEventListener('click', window.sendOtp);
 
-    // --- Dashboard Specific Logic ---
-
-    // Populate categories in the filter dropdown
-    if (categoryFilter) {
-        const categories = [...new Set(products.map(p => p.category))];
-        categoryFilter.innerHTML = '<option value="all">Semua Kategori</option>';
-        categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
-            categoryFilter.appendChild(option);
-        });
-
-        // Filter products when category changes
-        categoryFilter.addEventListener('change', () => filterAndSearchProducts());
-    }
-
     // Search functionality
     if (searchInput) {
         searchInput.addEventListener('input', () => filterAndSearchProducts());
     }
 
-    // Combined filter and search function
-    function filterAndSearchProducts() {
-        const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
-        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-
-        let filtered = products;
-
-        if (selectedCategory !== 'all') {
-            filtered = filtered.filter(product => product.category === selectedCategory);
-        }
-
-        if (searchTerm) {
-            filtered = filtered.filter(product =>
-                product.name.toLowerCase().includes(searchTerm) ||
-                product.description.toLowerCase().includes(searchTerm) ||
-                product.category.toLowerCase().includes(searchTerm)
-            );
-        }
-        renderProducts(filtered);
-    }
-
     // Initial product rendering on dashboard load
     renderProducts(products);
 });
-
-fetch("http://127.0.0.1:8000/api/products/")
-  .then(response => {
-    if (!response.ok) throw new Error("Gagal mengambil produk");
-    return response.json();
-  })
-  .then(data => {
-    console.log(data)
-    products = data;
-    renderProducts(products);
-  })
-  .catch(error => {
-    console.error("Error:", error);
-    alert("Gagal memuat produk.");
-  });
