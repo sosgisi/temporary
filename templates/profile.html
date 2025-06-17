@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>Profil | TerusanMinimarket</title>
+  <link rel="stylesheet" type="text/css" href="{% static '/global.css' %}">
+</head>
+<body>
+
+<header>
+  <h1>🛒 Terusan Minimarket</h1>
+  <div class="header-right">
+   <div class="search-bar">
+     <input id="searchInput" placeholder="Cari di Terusan Minimarket" type="text" />
+     <button>🔍</button>
+   </div>
+
+    <div class="header-icons">
+      <a href="{% url 'home' %}" title="Home">
+
+        <img src="https://cdn-icons-png.flaticon.com/512/1946/1946433.png" alt="Home Icon" />
+      </a>
+      <a href="{% url 'cart' %}" title="Keranjang">
+        <img src="https://cdn-icons-png.flaticon.com/512/263/263142.png" alt="Cart Icon" />
+      </a>
+    </div>
+
+   <div id="authButtons" class="auth-buttons">
+     <button class="btn btn-outline-primary btn-sm" id="btnLogin">Masuk</button>
+     <button class="btn btn-primary btn-sm" id="btnRegister">Daftar</button>
+   </div>
+
+   <div id="accountMenu" class="account-menu" style="display: none;">
+     <div class="account-menu-trigger">
+       <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="User Icon" />
+       <span id="accountUsername"></span>
+     </div>
+     <div id="accountDropdown" class="account-dropdown">
+       <a href="profile.html">Profil</a>
+       <button id="logoutBtn">Logout</button>
+     </div>
+   </div>
+  </div>
+</header>
+
+<main>
+    <div class="profile-card">
+        <h2>Profil Saya</h2>
+        <form id="profileForm">
+            <label for="profileUsername">Username:</label>
+            <input type="text" id="profileUsername" readonly>
+
+            <label for="profileName">Nama Lengkap:</label>
+            <input type="text" id="profileName">
+
+            <label for="profileEmail">Email:</label>
+            <input type="email" id="profileEmail">
+
+            <label for="profilePhone">Nomor Telepon:</label>
+            <input type="tel" id="profilePhone">
+
+            <label for="profileAddress">Alamat:</label>
+            <textarea id="profileAddress" rows="3"></textarea>
+
+            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </form>
+    </div>
+</main>
+
+<footer>
+  &copy; 2025 TerusanMinimarket. All Rights Reserved.
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<div id="authModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button" id="closeAuthModal">&times;</span>
+    <div id="loginForm" class="auth-form">
+      <h2>Masuk</h2>
+      <input type="text" id="loginId" placeholder="Username / Email / No. Telepon" required>
+      <input type="password" id="loginPassword" placeholder="Kata Sandi" required>
+      <p id="loginError" class="error-message"></p>
+      <button type="submit" class="btn btn-primary" id="btnLoginSubmit">Masuk</button>
+      <button type="button" class="btn btn-link" id="showRegister">Belum punya akun? Daftar di sini</button>
+      <button type="button" class="btn btn-link" id="showForgotPassword">Lupa Kata Sandi?</button>
+    </div>
+
+    <div id="registerForm" class="auth-form">
+      <h2>Daftar</h2>
+      <input type="text" id="regUsername" placeholder="Username" required>
+      <input type="text" id="regName" placeholder="Nama Lengkap" required>
+      <input type="email" id="regEmail" placeholder="Email" required>
+      <input type="tel" id="regPhone" placeholder="Nomor Telepon (cth: 081234567890)" required>
+      <input type="password" id="regPassword" placeholder="Kata Sandi" required>
+      <p id="registerError" class="error-message"></p>
+      <button type="submit" class="btn btn-primary" id="btnRegisterSubmit">Daftar</button>
+      <button type="button" class="btn btn-link" id="showLoginFromRegister">Sudah punya akun? Masuk</button>
+    </div>
+
+    <div id="forgotPasswordForm" class="auth-form">
+      <h2>Lupa Kata Sandi</h2>
+      <p>Masukkan Username / Email / No. Telepon Anda untuk reset kata sandi.</p>
+      <input type="text" id="forgotId" placeholder="Username / Email / No. Telepon" required>
+      <p id="forgotError" class="error-message"></p>
+      <button type="submit" class="btn btn-primary" id="btnResetPassword">Reset Kata Sandi</button>
+      <button type="button" class="btn btn-link" id="showLoginFromForgot">Kembali ke Login</button>
+    </div>
+  </div>
+</div>
+
+<script src="{% static '/dashboard.js' %}"></script> <script src="{% static '/profile.js' %}"></script>
+</html>
