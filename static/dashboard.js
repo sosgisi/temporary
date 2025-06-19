@@ -45,8 +45,8 @@ const showLoginFromOtp = document.getElementById('showLoginFromOtp');
 const otpVerificationForm = document.getElementById('otpVerificationForm');
 const otpInput = document.getElementById('otpInput');
 const otpMessage = document.getElementById('otpMessage');
-const otpError = document.getElementById('otpError');
-let btnVerifyOtp = document.getElementById('btnVerifyOtp');
+// const otpError = document.getElementById('otpError');
+// let btnVerifyOtp = document.getElementById('btnVerifyOtp');
 const btnResendOtp = document.getElementById('btnResendOtp');
 const showLoginFromOtpLink = document.getElementById('showLoginFromOtp');
 
@@ -266,10 +266,11 @@ async function checkLoginStatus() {
 }
 
 async function sendOtp(emailOrUsername) {
-  try {
-    currentOtpUserIdentifier = emailOrUsername;
-
-    const response = await fetch('/api/send-otp/', {
+    console.log('emailOrUsername ', emailOrUsername)
+    window.currentOtpUserIdentifier = emailOrUsername;
+    console.log('currentOtpUserIdentifier ', window.currentOtpUserIdentifier)
+    try {
+    const response = await fetch('/api/send_otp/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email_or_username: emailOrUsername })
@@ -304,14 +305,14 @@ async function sendOtp(emailOrUsername) {
 /**
  * Handles resending the OTP.
  */
-window.sendOtp = function() {
-    if (!currentOtpUserIdentifier) {
-        if (otpError) otpError.textContent = 'Tidak ada tujuan OTP yang tersimpan. Silakan kembali ke form sebelumnya.';
-        window.showToast('Gagal mengirim ulang OTP. Data tujuan tidak ditemukan.', 'error');
-        return;
-    }
-    sendOtp(currentOtpUserIdentifier);
-};
+// window.sendOtp = function() {
+//     if (!currentOtpUserIdentifier) {
+//         if (otpError) otpError.textContent = 'Tidak ada tujuan OTP yang tersimpan. Silakan kembali ke form sebelumnya.';
+//         window.showToast('Gagal mengirim ulang OTP. Data tujuan tidak ditemukan.', 'error');
+//         return;
+//     }
+//     sendOtp(currentOtpUserIdentifier);
+// };
 
 
 // --- Product Catalog and Detail Functions ---
@@ -564,8 +565,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const data = await response.json();
+                console.log('email ', email)
+                console.log('data ', data)
+                console.log('response ', response)
 
                 if (response.ok && data.success) {
+                    sendOtp(email);
                     registerError.textContent = '';
                     alert(data.message);
                     otpMessage.textContent = data.message;
@@ -617,13 +622,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- OTP Verification Logic ---
     const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+    const otpError = document.getElementById('otpError');
     if (btnVerifyOtp) {
         btnVerifyOtp.addEventListener('click', async (e) => {
+            console.log('user ', currentOtpUserIdentifier);
             e.preventDefault();
             const otpInput = document.getElementById('otpInput');
             const otpCode = otpInput ? otpInput.value.trim() : '';
-            const userIdentifier = currentOtpUserIdentifier; // ✅ Gunakan variabel global
+            const userIdentifier = window.currentOtpUserIdentifier; // ✅ Gunakan variabel global
 
+            console.log('otpCode ',otpCode)
+            console.log('userIdentifier ',userIdentifier)
             if (!otpCode || !userIdentifier) {
                 otpError.textContent = 'OTP dan identitas pengguna diperlukan.';
                 return;
