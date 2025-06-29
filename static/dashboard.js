@@ -380,7 +380,7 @@ async function showProductDetail(productId) {
   modalProductStock.textContent = `${product.stock ?? 'N/A'} item tersedia`;
 
   modalAddToCartBtn.dataset.productId = product.id;
-  modalAddToCartBtn.onclick = () => addToCart(product.id);
+//   modalAddToCartBtn.onclick = () => addToCart(product.id);
 
   const currentUser = await getCurrentUser();
   modalAddToCartBtn.style.display = currentUser ? 'block' : 'none';
@@ -436,6 +436,33 @@ function updateCartCountUI() {
   }
 }
 
+// Combined filter and search function
+function filterAndSearchProducts() {
+    console.log("testing")
+    const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    let filtered = products;
+
+    if (selectedCategory !== 'all') {
+        filtered = filtered.filter(product =>
+            (product.category || 'Tidak ada kategori').toLowerCase() === selectedCategory.toLowerCase()
+        );
+    }
+
+    if (searchTerm) {
+        filtered = filtered.filter(product => {
+            const name = (product.name || '').toLowerCase();
+            const desc = (product.description || '').toLowerCase();
+            const cat = (product.category || '').toLowerCase();
+
+            return name.includes(searchTerm) || desc.includes(searchTerm) || cat.includes(searchTerm);
+        });
+    }
+
+    renderProducts(filtered);
+}
+
 async function fetchProducts() {
     await fetch("http://127.0.0.1:8000/api/products/")
     .then(response => {
@@ -451,32 +478,6 @@ async function fetchProducts() {
         console.error("Error:", error);
         alert("Gagal memuat produk.");
     });
-
-    // Combined filter and search function
-    function filterAndSearchProducts() {
-        const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
-        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-
-        let filtered = products;
-
-        if (selectedCategory !== 'all') {
-            filtered = filtered.filter(product =>
-                (product.category || 'Tidak ada kategori').toLowerCase() === selectedCategory.toLowerCase()
-            );
-        }
-
-        if (searchTerm) {
-            filtered = filtered.filter(product => {
-                const name = (product.name || '').toLowerCase();
-                const desc = (product.description || '').toLowerCase();
-                const cat = (product.category || '').toLowerCase();
-
-                return name.includes(searchTerm) || desc.includes(searchTerm) || cat.includes(searchTerm);
-            });
-        }
-
-        renderProducts(filtered);
-    }
     
     // Populate categories in the filter dropdown
     if (categoryFilter) {
@@ -676,6 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
 
+            console.log('data.is_authenticated ', data.is_authenticated);
             if (data.is_authenticated) {
                 // Tampilkan menu akun
                 document.getElementById('authButtons').style.display = 'none';
@@ -683,6 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('accountUsername').textContent = data.username;
             } else {
                 // Tampilkan tombol login
+                document.getElementById('cartIcon').style.display = 'none';
                 document.getElementById('authButtons').style.display = 'block';
                 document.getElementById('accountMenu').style.display = 'none';
             }
@@ -728,10 +731,28 @@ function addToCart(productId) {
   }
 
   localStorage.setItem('cart', JSON.stringify(cart));
-  
-  updateCartCountUI(); // Pastikan ini ada!
-  showToast(`${product.name} berhasil ditambahkan ke keranjang.`);
+
+  // Kirim ke backend pakai Fetch
+  fetch('/add-to-cart/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken(), // Fungsi ini harus ada untuk Django
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      quantity: 1
+    })
+  }).then(response => {
+    if (response.ok) {
+      updateCartCountUI();
+      showToast(`${product.name} berhasil ditambahkan ke keranjang.`);
+    } else {
+      showToast("Gagal menambahkan ke keranjang.");
+    }
+  });
 }
+
 
 function updateCartCountUI() {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -845,7 +866,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Search functionality
     if (searchInput) {
-        searchInput.addEventListener('input', () => filterAndSearchProducts());
+        searchInput.addEventListener('input', () => {
+            console.log('Input event triggered');
+            filterAndSearchProducts();
+        });
     }
 
     // Initial product rendering on dashboard load

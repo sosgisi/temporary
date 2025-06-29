@@ -102,6 +102,7 @@
       <input type="email" id="regEmail" placeholder="Email" />
       <input type="tel" id="regPhone" placeholder="Nomor Telepon" />
       <input type="password" id="regPassword" placeholder="Password" />
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
       <button class="btn btn-primary" id="btnRegisterSubmit">Daftar</button>
       <p class="error-message" id="registerError"></p>
       <p>Sudah punya akun? <a href="#" id="showLoginFromRegister">Masuk di sini</a></p>

@@ -1,4 +1,5 @@
 # products/views.py
+from django.utils.timezone import localtime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -12,9 +13,13 @@ from .models import OTP # Import the OTP model
 import traceback
 import json
 from django.utils.timezone import now
-from .models import Cart, CartItem, Product
+from .models import Cart, CartItem, Product, Order, OrderItem
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from .models import CartItem
 
 # Existing views (keep them as they are)
 def dashboard(request):
@@ -108,7 +113,7 @@ def register_user(request):
             user.is_active = False
             user.save()
 
-            send_otp_to_email(user)
+            # send_otp_to_email(user)
     
             return JsonResponse({'success': True, 'message': 'Registration successful. OTP sent to your email for verification.'}, status=201)
 
@@ -214,28 +219,26 @@ def get_current_user(request):
     return JsonResponse({'is_authenticated': False})
 
 #Cart, CartItem, Product
-@method_decorator(csrf_exempt, name='dispatch')
+@csrf_exempt  # Gunakan jika kamu belum pakai CSRF token
 @login_required
 def add_to_cart(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            product_id = data.get('product_id')
-            quantity = int(data.get('quantity', 1))
+    if request.method == "POST":
+        data = json.loads(request.body)
+        product_id = data.get("product_id")
+        quantity = data.get("quantity", 1)
 
-            product = Product.objects.get(id=product_id)
-            cart = Cart.objects.get(user=request.user)
+        product = Product.objects.get(id=product_id)
+        cart, _ = Cart.objects.get_or_create(user=request.user)
 
-            item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-            if not created:
-                item.quantity += quantity
-            item.save()
+        item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        if not created:
+            item.quantity += quantity
+        else:
+            item.quantity = quantity
+        item.save()
 
-            return JsonResponse({'success': True, 'message': 'Item added to cart.'})
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid request"}, status=400)
 
 @login_required
 def get_cart_items(request):
@@ -320,3 +323,130 @@ def get_products(request):
         })
 
     return JsonResponse(data, safe=False)
+
+@login_required
+def api_cart_items(request):
+    cart_items = CartItem.objects.filter(cart__user=request.user)
+    items_data = []
+    total = 0
+
+    for item in cart_items:
+        item_total = item.get_total_price()
+        total += item_total
+        items_data.append({
+            "product_name": item.product.name,
+            "price": item.product.price,
+            "quantity": item.quantity,
+            "total_price": item_total,
+        })
+
+    return JsonResponse({
+        "items": items_data,
+        "total": total
+    })
+
+@csrf_exempt  # atau gunakan @ensure_csrf_cookie di template
+@login_required
+def api_clear_cart(request):
+    if request.method == "POST":
+        CartItem.objects.filter(cart__user=request.user).delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+@login_required
+def api_checkout(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            address = data.get("address")
+            city = data.get("city")
+            postal_code = data.get("postal_code")
+            payment_method = data.get("payment_method")
+            
+            if not all([address, city, postal_code, payment_method]):
+                return JsonResponse({"error": "Data tidak lengkap."}, status=400)
+            
+            cart_items = CartItem.objects.filter(cart__user=request.user)
+            if not cart_items.exists():
+                return JsonResponse({"error": "Keranjang kosong."}, status=400)
+
+            total = sum([item.get_total_price() for item in cart_items])
+
+            order = Order.objects.create(
+                user=request.user,
+                address=address,
+                city=city,
+                postal_code=postal_code,
+                payment_method=payment_method,
+                total=total,
+            )
+
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=item.product.price
+                )
+                cart_items.delete()
+            return JsonResponse({"success": True})
+        except Exception as e:
+            print("Checkout Error:", str(e))
+            traceback.print_exc()
+        return JsonResponse({"error": "Server error"}, status=500)
+
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+@login_required
+def api_order_history(request):
+    user = request.user
+    try:
+        orders = Order.objects.filter(user=user).order_by("-created_at")
+        formatted_orders = []
+
+        for order in orders:
+            order_items = order.orderitem_set.all()
+            formatted_items = [
+                {
+                    "name": item.product.name,
+                    "quantity": item.quantity,
+                    "price": int(item.product.price),
+                }
+                for item in order_items
+            ]
+
+            formatted_orders.append({
+                "orderId": f"TRSMK-{order.id:06d}",
+                "date": localtime(order.created_at).strftime("%Y-%m-%dT%H:%M:%S"),
+                # "date": order.created_at.strftime("%Y-%m-%dT%H:%M:%S"),
+                "status": "Selesai",
+                "items": formatted_items,
+                "total": int(order.total)
+            })
+
+        return JsonResponse({"success": True, "orders": formatted_orders})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+@login_required
+def api_cart_items(request):
+    cart_items = CartItem.objects.filter(cart__user=request.user)
+    items = []
+    total = 0
+
+    for item in cart_items:
+        total_price = item.get_total_price()
+        items.append({
+            "product_name": item.product.name,
+            "price": item.product.price,
+            "quantity": item.quantity,
+            "total_price": total_price,
+        })
+        total += total_price
+
+    return JsonResponse({
+        "items": items,
+        "total": total
+    })

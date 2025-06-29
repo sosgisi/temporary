@@ -22,7 +22,7 @@
       <a href="{% url 'home' %}" title="Home">
         <img src="https://cdn-icons-png.flaticon.com/512/1946/1946433.png" alt="Home Icon" />
       </a>
-      <a href="{% url 'cart' %}" title="Keranjang">
+      <a id="cartIcon" href="{% url 'cart' %}" title="Keranjang">
         <img src="https://cdn-icons-png.flaticon.com/512/263/263142.png" alt="Cart Icon" />
       </a>
     </div>
@@ -65,13 +65,14 @@
       <div class="method-section">
         <h3>Metode Pembayaran</h3>
         <div class="logos payment-logos">
-          <img src="https://cdn-icons-png.flaticon.com/512/5968/5968390.png" alt="Bank BCA">
-          <img src="https://cdn-icons-png.flaticon.com/512/5968/5968412.png" alt="Bank Mandiri">
-          <img src="https://cdn-icons-png.flaticon.com/512/5968/5968434.png" alt="Bank BRI">
-          <img src="https://cdn-icons-png.flaticon.com/512/5968/5968461.png" alt="Bank BNI">
-          <img src="https://cdn-icons-png.flaticon.com/512/825/825479.png" alt="DANA">
-          <img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="OVO">
-          <img src="https://cdn-icons-png.flaticon.com/512/825/825531.png" alt="LinkAja">
+              <img src="https://buatlogoonline.com/wp-content/uploads/2022/10/Logo-BCA-PNG.png" alt="Bank BCA" />
+              <img src="https://e7.pngegg.com/pngimages/24/85/png-clipart-bank-mandiri-logo-credit-card-bank-text-logo.png" alt="Bank Mandiri" />
+              <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjeXjr9tLxk36ccLwYO4m3m98zyLhfjALPaDtITFj4gG-XTLEIiNT2wasZvIsHs33UjuPzhGKzWZiL5TSVrFzaTBeiPuIYUwv7kRDEafzuVMd4MA0UI33_JzUPUiwfv9ZJoeo_l8xjmOVh-gqP0iG6qejC0Rl2aVfG49Y0QnVCDbadrR6CUdJ7rMQ/w320-h271/Bank%20BRI%20Logo.png" alt="Bank BRI" />
+              <img src="https://cdn3.iconfinder.com/data/icons/banks-in-indonesia-logo-badge/100/BNI-512.png" alt="Bank BNI" />
+              <img src="https://i.pinimg.com/736x/f5/8c/a3/f58ca3528b238877e9855fcac1daa328.jpg" alt="DANA" />
+              <img src="https://i.pinimg.com/736x/60/42/c3/6042c3148add711c946833bbc2b90f6d.jpg" alt="OVO" />
+              <img src="https://assets-a1.kompasiana.com/items/album/2023/04/13/beli-saldo-paypal-via-linkaja-6437c7be4addee244748a212.png" alt="LinkAja" />
+              <img src="https://images.seeklogo.com/logo-png/39/1/quick-response-code-indonesia-standard-qris-logo-png_seeklogo-391791.png" alt="Qris" />
         </div>
       </div>
 
@@ -156,6 +157,16 @@
   </div>
 </div>
 
-<script src="{% static 'dashboard.js' %}?v=2"></script>
+<form style="display:none;">
+  {% csrf_token %}
+</form>
+
+<script>
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+</script>
+
+<script src="{% static 'dashboard.js' %}?v=3"></script>
 </body>
 </html>

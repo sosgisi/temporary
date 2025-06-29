@@ -125,6 +125,16 @@
   </div>
 </div>
 
+<form style="display:none;">
+  {% csrf_token %}
+</form>
+
+<script>
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+</script>
+
 <script src="{% static 'dashboard.js' %}"></script>
 <script src="{% static 'cart.js' %}"></script>
 

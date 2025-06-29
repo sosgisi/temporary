@@ -327,3 +327,93 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+document.addEventListener("DOMContentLoaded", fetchCartItems);
+
+function fetchCartItems() {
+  fetch("/api/cart-items/", {
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.items.length === 0) {
+      document.getElementById("cartEmptyMessage").style.display = "block";
+      document.getElementById("cartSummary").style.display = "none";
+    } else {
+      renderCartItems(data.items);
+      updateSummary(data.total);
+    }
+  })
+  .catch(err => {
+    console.error("Gagal mengambil data keranjang:", err);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const clearCartBtn = document.getElementById("clearCartBtn");
+  if (clearCartBtn) {
+    clearCartBtn.addEventListener("click", clearCart);
+  }
+});
+
+function clearCart() {
+  if (!confirm("Apakah Anda yakin ingin mengosongkan keranjang?")) return;
+
+  fetch("/api/cart-clear/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCSRFToken(),
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById("cartListContainer").innerHTML = "";
+      document.getElementById("cartSubtotal").innerText = "Rp 0";
+      document.getElementById("cartShipping").innerText = "Rp 0";
+      document.getElementById("cartTotal").innerText = "Rp 0";
+      document.getElementById("cartSummary").style.display = "none";
+      document.getElementById("cartEmptyMessage").style.display = "block";
+      showToast("Keranjang berhasil dikosongkan.");
+    }
+  })
+  .catch(err => {
+    console.error("Gagal menghapus keranjang:", err);
+  });
+}
+
+// Ambil CSRF token dari form tersembunyi (HTML harus punya {% csrf_token %})
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function renderCartItems(items) {
+  const container = document.getElementById("cartListContainer");
+  container.innerHTML = "";
+  items.forEach(item => {
+    const el = document.createElement("div");
+    el.classList.add("cart-item");
+    el.innerHTML = `
+      <div>
+        <strong>${item.product_name}</strong><br/>
+        Harga: Rp ${item.price}<br/>
+        Jumlah: ${item.quantity}
+      </div>
+      <div>Total: Rp ${item.total_price}</div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function updateSummary(total) {
+  const shipping = 0;
+  const subtotal = total;
+  const totalWithShipping = subtotal + shipping;
+
+  document.getElementById("cartSubtotal").innerText = `Rp ${subtotal}`;
+  document.getElementById("cartShipping").innerText = `Rp ${shipping}`;
+  document.getElementById("cartTotal").innerText = `Rp ${totalWithShipping}`;
+}
